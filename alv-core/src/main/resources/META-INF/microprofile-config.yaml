@@ -1,0 +1,3 @@
+smallrye:
+  config:
+    locations: cluster-config.yaml

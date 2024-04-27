@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sbe:messageSchema
+  xmlns:sbe="http://fixprotocol.io/2016/sbe"
+  package="io.alv.core"
+  id="100"
+  version="1"
+  semanticVersion="0.1"
+  description="Cluster Protocol Messages"
+  byteOrder="bigEndian"
+>
+  <types>
+    <type name="PayloadType" primitiveType="char" length="256" characterEncoding="UTF-8"/>
+    <type name="Key" primitiveType="char" length="128" characterEncoding="UTF-8"/>
+    <type name="Failure" primitiveType="char" length="1024" characterEncoding="UTF-8"/>
+    <enum name="Encoding" encodingType="int32">
+      <validValue name="JSON">0</validValue>
+      <validValue name="SBE">1</validValue>
+      <validValue name="FURY">2</validValue>
+      <validValue name="KYRO">3</validValue>
+    </enum>
+    <enum name="ErrorType" encodingType="int32">
+      <validValue name="CONSTRAINT_VIOLATION">0</validValue>
+      <validValue name="VALIDATION_EXCEPTION">1</validValue>
+      <validValue name="DESERIALIZATION_EXCEPTION">2</validValue>
+      <validValue name="SERIALIZATION_EXCEPTION">3</validValue>
+      <validValue name="HANDLER_EXCEPTION">4</validValue>
+    </enum>
+    <composite name="messageHeader" description="Message identifiers and length of message root">
+      <type name="blockLength" primitiveType="uint16"/>
+      <type name="templateId" primitiveType="uint16"/>
+      <type name="schemaId" primitiveType="uint16"/>
+      <type name="version" primitiveType="uint16"/>
+    </composite>
+    <composite name="varDataEncoding" description="Variable length binary blob.">
+      <type name="length" primitiveType="uint32" maxValue="1073741824"/>
+      <type name="varData" primitiveType="uint8" length="0"/>
+    </composite>
+    <composite name="varStringEncoding">
+      <type name="length" primitiveType="uint32" maxValue="1073741824"/>
+      <type name="varData" primitiveType="uint8" length="0" characterEncoding="UTF-8"/>
+    </composite>
+    <composite name="groupSizeEncoding" description="Repeating group dimensions.">
+      <type name="blockLength" primitiveType="uint16"/>
+      <type name="numInGroup" primitiveType="uint16"/>
+    </composite>
+  </types>
+
+  <!-- Cluster Protocol Messages -->
+  <sbe:message name="InputMessage" id="1" description="State machine input message">
+    <field name="snowflake" id="1" type="int64"/>
+    <field name="payloadEncoding" id="3" type="Encoding"/>
+    <field name="payloadType" id="4" type="PayloadType"/>
+    <data name="payload" id="5" type="varDataEncoding"/>
+  </sbe:message>
+  <sbe:message name="Event" id="2" description="State machine event">
+    <field name="snowflake" id="1" type="int64"/>
+    <field name="timestamp" id="2" type="int64"/>
+    <field name="payloadEncoding" id="4" type="Encoding"/>
+    <field name="payloadType" id="5" type="PayloadType"/>
+    <data name="payload" id="6" type="varDataEncoding"/>
+  </sbe:message>
+  <sbe:message name="Ack" id="3" description="Acknowledgment of command">
+    <field name="snowflake" id="1" type="int64"/>
+    <field name="timestamp" id="2" type="int64"/>
+  </sbe:message>
+  <sbe:message name="ErrorMessage" id="4" description="failure to handle a command">
+    <field name="snowflake" id="1" type="int64"/>
+    <field name="timestamp" id="2" type="int64"/>
+    <field name="errorType" id="3" type="ErrorType"/>
+    <field name="message" id="4" type="Failure" presence="optional"/>
+    <field name="code" id="5" type="int16" presence="optional"/>
+  </sbe:message>
+  <!--  -->
+
+  <!-- Cluster State -->
+  <sbe:message name="String2ObjectEntry" id="11" description="Snapshot of the state machine">
+    <field name="key" id="1" type="Key"/>
+    <field name="payloadEncoding" id="3" type="Encoding"/>
+    <field name="payloadType" id="4" type="PayloadType"/>
+    <data name="payload" id="5" type="varDataEncoding"/>
+  </sbe:message>
+  <sbe:message name="Long2ObjectEntry" id="12" description="Snapshot of the state machine">
+    <field name="key" id="1" type="int64"/>
+    <field name="payloadEncoding" id="3" type="Encoding"/>
+    <field name="payloadType" id="4" type="PayloadType"/>
+    <data name="payload" id="5" type="varDataEncoding"/>
+  </sbe:message>
+  <sbe:message name="Int2ObjectEntry" id="13" description="Snapshot of the state machine">
+    <field name="key" id="1" type="int32"/>
+    <field name="payloadEncoding" id="3" type="Encoding"/>
+    <field name="payloadType" id="4" type="PayloadType"/>
+    <data name="payload" id="5" type="varDataEncoding"/>
+  </sbe:message>
+  <!--  -->
+
+  <!-- Cluster Snapshot Protocol -->
+  <sbe:message name="SnapshotStart" id="21" description="Signals the start of a snapshot stream">
+    <field name="timestamp" id="1" type="int64"/>
+  </sbe:message>
+  <sbe:message name="SnapshotEnd" id="22" description="Signals the end of a snapshot stream">
+    <field name="timestamp" id="1" type="int64"/>
+    <field name="fragmentCount" id="2" type="int32"/>
+  </sbe:message>
+  <sbe:message name="String2ObjectEntryFragment" id="23" description="Entry fragment">
+    <field name="timestamp" id="1" type="int64"/>
+    <field name="fragmentNumber" id="2" type="int32"/>
+    <field name="key" id="3" type="Key"/>
+    <data name="payload" id="4" type="varDataEncoding"/>
+  </sbe:message>
+  <sbe:message name="Int2ObjectEntryFragment" id="24" description="Entry fragment">
+    <field name="timestamp" id="1" type="int64"/>
+    <field name="fragmentNumber" id="2" type="int32"/>
+    <field name="key" id="3" type="int32"/>
+    <data name="payload" id="4" type="varDataEncoding"/>
+  </sbe:message>
+  <sbe:message name="Long2ObjectEntryFragment" id="25" description="Entry fragment">
+    <field name="timestamp" id="1" type="int64"/>
+    <field name="fragmentNumber" id="2" type="int32"/>
+    <field name="key" id="3" type="int64"/>
+    <data name="payload" id="4" type="varDataEncoding"/>
+  </sbe:message>
+  <!--  -->
+</sbe:messageSchema>

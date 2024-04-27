@@ -1,0 +1,21 @@
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>[%thread] %-5level - %msg%n</pattern>
+    </encoder>
+    <immediateFlush>false</immediateFlush>  <!-- Optimize performance by reducing I/O frequency -->
+  </appender>
+  <!-- Define the Async Appender that wraps the STDOUT appender -->
+  <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>1024</queueSize>  <!-- A larger queue to handle bursts of log entries -->
+    <discardingThreshold>50</discardingThreshold>  <!-- Begin to discard less critical logs early -->
+    <includeCallerData>false</includeCallerData>  <!-- Improve performance by not collecting caller data -->
+    <appender-ref ref="STDOUT"/>
+  </appender>
+
+  <!-- Root logger configuration -->
+  <root level="info">
+    <appender-ref ref="ASYNC"/>
+  </root>
+
+</configuration>

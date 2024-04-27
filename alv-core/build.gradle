@@ -1,0 +1,69 @@
+configurations {
+  codeGeneration
+}
+
+dependencies {
+  implementation "org.slf4j:slf4j-api:$slf4j"
+  // aeron
+  implementation "io.aeron:aeron-all:$aeron"
+  codeGeneration "uk.co.real-logic:sbe-tool:$sbe"
+
+  // configuration
+  implementation("io.smallrye.config:smallrye-config:$smallryeConfig")
+  implementation("io.smallrye.config:smallrye-config-source-file-system:$smallryeConfig")
+  implementation("io.smallrye.config:smallrye-config-source-yaml:$smallryeConfig")
+
+  implementation "com.google.auto.service:auto-service:$auto_service"
+  annotationProcessor "com.google.auto.service:auto-service:$auto_service"
+  testAnnotationProcessor "com.google.auto.service:auto-service:$auto_service"
+
+
+
+  // default jackson codecs
+  implementation "com.fasterxml.jackson.core:jackson-databind:$jackson"
+  implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson"
+  implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson"
+  implementation "com.esotericsoftware:kryo:$kyro"
+  implementation "org.furyio:fury-core:$furyCodec"
+  implementation "org.lmdbjava:lmdbjava:$lmdb"
+
+  testImplementation 'org.mockito:mockito-core:5.10.0'
+  testImplementation 'org.mockito:mockito-junit-jupiter:5.10.0'
+  testImplementation "org.junit.jupiter:junit-jupiter-api:$junit"
+  testImplementation "org.junit.jupiter:junit-jupiter-engine:$junit"
+  testImplementation "org.junit.jupiter:junit-jupiter-params:$junit"
+  testImplementation "ch.qos.logback:logback-classic:$logback"
+  testAnnotationProcessor project(':alv-ap')
+  testImplementation project(':alv-ap')
+
+
+}
+
+tasks.withType(Test).configureEach {
+  useJUnitPlatform()
+  jvmArgs '--add-opens', 'java.base/java.nio=ALL-UNNAMED', '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
+}
+
+tasks.register('generateMessages', JavaExec) {
+  mainClass = 'uk.co.real_logic.sbe.SbeTool'
+  classpath = configurations.codeGeneration
+  systemProperties([
+    'sbe.output.dir'                  : 'build/generated/sources/annotationProcessor/java/main',
+    'sbe.target.language'             : 'Java',
+    'sbe.validation.stop.on.error'    : 'true',
+    'sbe.validation.xsd'              : 'src/main/resources/sbe/sbe.xsd',
+    'sbe.java.generate.interfaces'    : 'true',
+    'sbe.generate.access.order.checks': 'true'
+  ])
+  args = ['src/main/resources/messages.xml']
+}
+
+sourceSets {
+  main {
+    java {
+      srcDirs += ['build/generated/sources/annotationProcessor/java/main']
+    }
+  }
+}
+
+compileJava.dependsOn 'generateMessages'

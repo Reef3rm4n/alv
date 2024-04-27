@@ -1,0 +1,78 @@
+plugins {
+  id 'java'
+  id 'maven-publish'
+  id 'java-library'
+  id 'org.sonarqube' version '3.1.1'
+  id 'me.qoomon.git-versioning' version '6.4.2'
+}
+
+java {
+  sourceCompatibility = '17'
+  targetCompatibility = '17'
+}
+
+ext {
+  mutiny = '3.7.2'
+  slf4j = '2.0.9'
+  junit = '5.7.0'
+  jackson = '2.15.3'
+  auto_service = '1.1.1'
+  sbe = '1.30.0'
+  smallryeConfig = '3.5.2'
+  furyCodec = '0.4.1'
+  logback = '1.4.12'
+  aeron = '1.43.0'
+  lmdb = '0.9.0'
+  vertx = '4.5.7'
+  kyro = '5.6.0'
+}
+
+gitVersioning.apply {
+  refs {
+    considerTagsOnBranches = true
+    tag('v(?<version>.*)') {
+      version = '${describe.tag.version.major}.${describe.distance}'
+    }
+    branch('master') {
+      version = '${describe.tag.version.major}.${describe.distance}'
+    }
+    branch('main') {
+      version = '${describe.tag.version.major}.${describe.distance}'
+    }
+    branch('.+') {
+      version = '${describe.tag.version.major}.${describe.distance}-${ref}'
+    }
+    rev {
+      version = '${commit.short}'
+    }
+  }
+}
+
+allprojects {
+  group = 'io.alv'
+  repositories {
+    mavenCentral()
+    mavenLocal()
+  }
+}
+
+subprojects {
+  apply plugin: 'java'
+  apply plugin: 'java-library'
+  apply plugin: 'maven-publish'
+  compileJava {
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+  }
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+      }
+    }
+  }
+}
+
+jar {
+  enabled = false
+}

@@ -1,0 +1,10 @@
+cluster:
+  deleteDirOnStart: true
+  dir: /Volumes/DevShm
+archive:
+  deleteDirOnStart: false
+  interval: 1
+  dir: /Users/juglair/backup
+lmdb:
+  dir: /Users/juglair/lmdb
+  size: 512mb

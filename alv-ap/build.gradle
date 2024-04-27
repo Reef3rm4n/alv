@@ -1,0 +1,10 @@
+
+dependencies {
+  implementation project(':alv-core')
+
+  implementation "com.google.auto.service:auto-service:$auto_service"
+  annotationProcessor "com.google.auto.service:auto-service:$auto_service"
+  testAnnotationProcessor "com.google.auto.service:auto-service:$auto_service"
+  implementation 'com.squareup:javapoet:1.13.0'
+  runtimeOnly 'com.google.auto:auto-common:1.2.2'
+}
