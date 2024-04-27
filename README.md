@@ -116,6 +116,45 @@ private static String createCounter() {
 }
 ```
 
+### Implementing DirectBufferCodec for SBE Encoding and Decoding
+
+In ALV, the `DirectBufferCodec` interface is used to implement encoding and decoding with SBE (Simple Binary Encoding).
+This interface must be implemented for each message type that needs to be encoded or decoded.
+
+Here's the `DirectBufferCodec` interface:
+
+```java
+public interface DirectBufferCodec<T> {
+  int encode(T message, MutableDirectBuffer buffer, int offset);
+  T decode(DirectBuffer directBuffer, int offset, int length);
+}
+```
+Example :
+
+```java
+public class SnapshotStartCodec implements DirectBufferCodec<SnapshotStart> {
+  private final SnapshotStartDecoder decoder = new SnapshotStartDecoder();
+  private final SnapshotStartEncoder encoder = new SnapshotStartEncoder();
+  private final MessageHeaderEncoder headerEncoder = new MessageHeaderEncoder();
+  private final MessageHeaderDecoder headerDecoder = new MessageHeaderDecoder();
+
+  @Override
+  public int encode(SnapshotStart message, MutableDirectBuffer buffer, int offset) {
+    headerDecoder.wrap(buffer, offset);
+    encoder.wrapAndApplyHeader(buffer, offset, headerEncoder);
+    encoder.timestamp(message.timestamp());
+    return headerEncoder.encodedLength() + encoder.encodedLength();
+  }
+
+  @Override
+  public SnapshotStart decode(DirectBuffer directBuffer, int offset, int length) {
+    decoder.wrapAndApplyHeader(directBuffer, offset, headerDecoder);
+    return new SnapshotStart(
+      decoder.timestamp()
+    );
+  }
+}
+```
 ## Getting Started
 Soon ALV will be available on Maven Central. For now, you can clone the repository and build the project locally.
 
