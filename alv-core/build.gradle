@@ -8,6 +8,12 @@ dependencies {
   implementation "io.aeron:aeron-all:$aeron"
   codeGeneration "uk.co.real-logic:sbe-tool:$sbe"
 
+  // vertx
+  implementation "io.smallrye.reactive:smallrye-mutiny-vertx-core:$mutiny"
+  implementation "io.smallrye.reactive:smallrye-mutiny-vertx-web:$mutiny"
+  implementation "io.vertx:vertx-grpc-server:$vertx"
+
+
   // configuration
   implementation("io.smallrye.config:smallrye-config:$smallryeConfig")
   implementation("io.smallrye.config:smallrye-config-source-file-system:$smallryeConfig")
