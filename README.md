@@ -3,7 +3,8 @@
 ALV is a robust library designed to integrate Aeron Cluster, LMDB, and Vert.x, aimed at streamlining the development of Aeron Cluster applications. It enhances the implementation process by leveraging LMDB for state storage, and automates both cluster client and Gateway generation using Vert.x.
 
 ## Key Features
-
+- **Automatic Snapshotting**: ALV automatically fragments models and snapshots lmdb state ensuring that the application can recover from failures efficiently.
+- **Cluster Archive**: ALV comes with a built-in aeron cluster archive that allows you to store and retrieve snapshots and logs.
 - **Auto-generation of Cluster Clients**: ALV automatically generates clients for each specified `MessageHandler`, which simplifies the client creation and management processes.
 - **Multiple Message Encodings**: Supports various encoding schemes including KYRO, FURY, JSON, and SBE, offering developers the flexibility to select the most appropriate encoding for their needs.
 - **Efficient Memory Management**: Utilizes static allocation with off-heap memory to optimize both memory usage and system performance.
