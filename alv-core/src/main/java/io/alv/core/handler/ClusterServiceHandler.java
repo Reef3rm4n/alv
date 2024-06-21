@@ -1,6 +1,5 @@
 package io.alv.core.handler;
 
-import io.alv.core.MessageHandler;
 import io.alv.core.cluster.storage.Lmdb;
 import io.alv.core.handler.messages.encoding.ClusterProtocolCodec;
 import io.alv.core.handler.messages.input.InputMessage;
@@ -32,7 +31,7 @@ public class ClusterServiceHandler implements ClusteredService {
   private final Int2ObjectHashMap<MessageHandlingSession<?>> messageHandlers = new Int2ObjectHashMap<>();
   private final Lmdb lmdb;
   private ClientSessionManager clientSessionManager;
-  private TimerManager timerManager;
+  private ScheduledMessagesHandler scheduledMessagesHandler;
   private Cluster cluster;
   private long logPosition;
 
@@ -51,7 +50,7 @@ public class ClusterServiceHandler implements ClusteredService {
     );
     this.cluster = cluster;
     this.clientSessionManager = new ClientSessionManager(cluster);
-    this.timerManager = new TimerManager(cluster);
+    this.scheduledMessagesHandler = new ScheduledMessagesHandler(cluster);
     loadHandlers();
     if (Objects.nonNull(snapshotImage)) {
       loadSnapshot(snapshotImage);
@@ -66,7 +65,7 @@ public class ClusterServiceHandler implements ClusteredService {
           messageHandlers.put(
             messageType.getName().hashCode(),
             new MessageHandlingSession<>(
-              timerManager,
+              scheduledMessagesHandler,
               clientSessionManager,
               messageHandler,
               lmdb
@@ -145,7 +144,7 @@ public class ClusterServiceHandler implements ClusteredService {
 
   @Override
   public void onTimerEvent(long correlationId, long timestamp) {
-    final var messageEnvelope = timerManager.get(correlationId);
+    final var messageEnvelope = scheduledMessagesHandler.get(correlationId);
     messageHandlers.get(messageEnvelope.messageEnvelope().payloadType().hashCode())
       .onMessage(messageEnvelope, timestamp, 0, logPosition);
   }
@@ -178,6 +177,7 @@ public class ClusterServiceHandler implements ClusteredService {
   public void onTerminate(Cluster cluster) {
     LOGGER.info("Cluster {} terminating logPosition={} memberId={} time={}", cluster.role(), cluster.logPosition(), cluster.memberId(), cluster.time());
     lmdb.close();
+    decoderContext.remove();
   }
 
 

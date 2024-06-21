@@ -43,7 +43,7 @@ public class MessageEnvelopeCodecContext {
     }
   );
 
-  private final ByteBuffer messageEnvelopeByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.ENVELOPE_SIZE);
+  private final ByteBuffer messageEnvelopeByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.MAX_ENVELOPE_SIZE);
 
   private final UnsafeBuffer messageEnvelopeBuffer = new UnsafeBuffer(messageEnvelopeByteBuffer);
 

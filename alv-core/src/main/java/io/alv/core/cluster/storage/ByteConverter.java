@@ -1,7 +1,7 @@
 package io.alv.core.cluster.storage;
 
 public class ByteConverter {
-
+  private ByteConverter(){}
   public static long convertToBytes(String input) {
     String trimmedInput = input.trim().toLowerCase();
     long multiplier;

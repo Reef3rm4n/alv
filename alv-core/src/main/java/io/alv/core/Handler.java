@@ -9,4 +9,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @SuppressWarnings({"unused"})
 public @interface Handler {
+
+  Class<?>[] broadcast();
+
+  Class<?>[] unicast() default {Void.class};
+
 }

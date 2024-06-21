@@ -5,13 +5,13 @@ import io.alv.core.handler.messages.input.InputMessage;
 import io.aeron.cluster.service.Cluster;
 import org.agrona.collections.Long2ObjectHashMap;
 
-public class TimerManager {
+public class ScheduledMessagesHandler {
 
-  private final Long2ObjectHashMap<InputMessage> scheduledCommands = new Long2ObjectHashMap<>();
+  private final Long2ObjectHashMap<InputMessage> scheduledMessages = new Long2ObjectHashMap<>();
 
   private final Cluster cluster;
 
-  public TimerManager(
+  public ScheduledMessagesHandler(
     Cluster cluster
   ) {
     this.cluster = cluster;
@@ -24,12 +24,12 @@ public class TimerManager {
         command
       )
     );
-    scheduledCommands.put(snowflake, encodedCommand);
+    scheduledMessages.put(snowflake, encodedCommand);
     cluster.scheduleTimer(snowflake, deadline);
   }
 
   public InputMessage get(long correlationKey) {
-    return scheduledCommands.get(correlationKey);
+    return scheduledMessages.get(correlationKey);
   }
 
 }

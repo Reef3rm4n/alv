@@ -1,6 +1,5 @@
 package io.alv.core;
 
-import io.alv.core.Encoding;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

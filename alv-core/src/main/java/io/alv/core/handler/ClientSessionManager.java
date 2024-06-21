@@ -35,7 +35,7 @@ public class ClientSessionManager {
     }
   }
 
-  public void send(long sessionId, Output output) {
+  public void unicast(long sessionId, Output output) {
     if (cluster.role() == Cluster.Role.LEADER) {
       final var session = sessions.get(sessionId);
       if (Objects.nonNull(session)) {
@@ -51,6 +51,7 @@ public class ClientSessionManager {
         sessions.remove(clientSession.id()).close();
       }
     }
+    decoderContext.remove();
   }
 
   private void offer(ClientSession clientSession, Output output) {

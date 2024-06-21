@@ -3,7 +3,7 @@ package io.alv.core.test;
 import io.alv.core.cluster.storage.Lmdb;
 import io.alv.core.handler.ClientSessionManager;
 import io.alv.core.handler.MessageHandlingSession;
-import io.alv.core.handler.TimerManager;
+import io.alv.core.handler.ScheduledMessagesHandler;
 import io.alv.core.handler.messages.encoding.MessageEnvelopeCodec;
 import io.alv.core.handler.messages.input.InputMessage;
 import io.alv.core.handler.messages.output.ErrorMessage;
@@ -30,7 +30,7 @@ class MessageHandlerSessionTest {
   ClientSessionManager clientSessionManager = mock(ClientSessionManager.class);
 
   @Mock
-  TimerManager timerManager = mock(TimerManager.class);
+  ScheduledMessagesHandler scheduledMessagesHandler = mock(ScheduledMessagesHandler.class);
 
   @AfterAll
   static void stop() {
@@ -38,7 +38,7 @@ class MessageHandlerSessionTest {
   }
 
   private final MessageHandlingSession<CreateCounter> messageHandlingSession = new MessageHandlingSession<>(
-    timerManager,
+    scheduledMessagesHandler,
     clientSessionManager,
     new CreateCounterHandler(),
     lmdb
@@ -62,7 +62,7 @@ class MessageHandlerSessionTest {
       final var result = lmdb.get(txn, id, Counter.class).orElse(null);
       Assertions.assertNotNull(result);
     }
-    verify(clientSessionManager, atLeastOnce()).send(anyLong(), any(Output.class));
+    verify(clientSessionManager, atLeastOnce()).unicast(anyLong(), any(Output.class));
     verify(clientSessionManager, atMostOnce()).broadcast(any(Output.class));
   }
 
@@ -78,7 +78,7 @@ class MessageHandlerSessionTest {
       final var result = lmdb.get(txn, id, Counter.class).orElse(null);
       Assertions.assertNull(result);
     }
-    verify(clientSessionManager, atLeastOnce()).send(anyLong(), any(ErrorMessage.class));
+    verify(clientSessionManager, atLeastOnce()).unicast(anyLong(), any(ErrorMessage.class));
     verify(clientSessionManager, never()).broadcast(any(Output.class));
   }
 

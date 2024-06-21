@@ -22,8 +22,8 @@ import java.util.function.Consumer;
 
 public class ClusterEgressListener implements EgressListener {
   private static final ThreadLocal<ClusterProtocolCodec> decoderContext = ThreadLocal.withInitial(ClusterProtocolCodec::new);
-  private final Long2ObjectHashMap<MessageOffer<?>> messageHandles = new Long2ObjectHashMap<>();
-  private final Long2ObjectHashMap<Consumer<AdminResponseCode>> adminHandles = new Long2ObjectHashMap<>();
+  private final Long2ObjectHashMap<MessageOffer<?>> unicastSubscriptions = new Long2ObjectHashMap<>();
+  private final Long2ObjectHashMap<Consumer<AdminResponseCode>> adminSubscriptions = new Long2ObjectHashMap<>();
   private final ObjectHashSet<BroadcastSubscription> broadcastSubscriptions = new ObjectHashSet<>(2);
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterEgressListener.class);
 
@@ -31,42 +31,42 @@ public class ClusterEgressListener implements EgressListener {
   public void onMessage(long clusterSessionId, long timestamp, DirectBuffer buffer, int offset, int length, Header header) {
     final var output = decoderContext.get().decodeOutput(buffer, offset, length);
     if (output instanceof Event event) {
-      handleReply(event);
-      handleBroadcast(event);
+      unicast(event);
+      broadcast(event);
     } else if (output instanceof Ack ack) {
-      handleAck(ack);
+      unicastAck(ack);
     } else if (output instanceof ErrorMessage errorMessage) {
-      handleError(errorMessage);
+      unicastError(errorMessage);
     }
   }
 
-  private void handleError(ErrorMessage errorMessage) {
+  private void unicastError(ErrorMessage errorMessage) {
     Objects.requireNonNullElse(
-        messageHandles.remove(errorMessage.snowflake()).onError(),
+        unicastSubscriptions.remove(errorMessage.snowflake()).onError(),
         error -> {
         }
       )
       .accept(errorMessage);
   }
 
-  private void handleAck(Ack ack) {
+  private void unicastAck(Ack ack) {
     Objects.requireNonNullElse(
-        messageHandles.remove(ack.snowflake()).onCompletion(),
+        unicastSubscriptions.remove(ack.snowflake()).onCompletion(),
         e -> {
         }
       )
       .accept(ack);
   }
 
-  private void handleBroadcast(Event event) {
+  private void broadcast(Event event) {
     if (event.snowflake() == 0) {
       broadcastSubscriptions.forEach(c -> c.onEvent(event));
     }
   }
 
-  private void handleReply(Event event) {
-    if (messageHandles.containsKey(event.snowflake())) {
-      messageHandles.get(event.snowflake()).onEvent().accept(event);
+  private void unicast(Event event) {
+    if (unicastSubscriptions.containsKey(event.snowflake())) {
+      unicastSubscriptions.get(event.snowflake()).onEvent().accept(event);
     }
   }
 
@@ -83,12 +83,12 @@ public class ClusterEgressListener implements EgressListener {
   @Override
   public void onAdminResponse(long clusterSessionId, long correlationId, AdminRequestType requestType, AdminResponseCode responseCode, String message, DirectBuffer payload, int payloadOffset, int payloadLength) {
     LOGGER.info("Admin response: clusterSessionId={} correlationId={} requestType={} responseCode={} message={} payload={} payloadOffset={} payloadLength={}", clusterSessionId, correlationId, requestType, responseCode, message, payload, payloadOffset, payloadLength);
-    adminHandles.get(correlationId).accept(responseCode);
+    adminSubscriptions.get(correlationId).accept(responseCode);
   }
 
 
   public void register(long snowflake, MessageOffer<?> rawMessageOffer) {
-    messageHandles.put(snowflake, rawMessageOffer);
+    unicastSubscriptions.put(snowflake, rawMessageOffer);
   }
 
   public void register(BroadcastSubscription eventConsumer) {
@@ -96,13 +96,13 @@ public class ClusterEgressListener implements EgressListener {
   }
 
   public void unregister(long snowflake) {
-    messageHandles.remove(snowflake);
+    unicastSubscriptions.remove(snowflake);
   }
 
   public void unregister(BroadcastSubscription snowflake) {
     broadcastSubscriptions.removeIf(s -> s.getClass().isAssignableFrom(snowflake.getClass()));
   }
   public void registerAdminMessageConsumer(long correlationId, Consumer<AdminResponseCode> responseCodeConsumer) {
-    adminHandles.put(correlationId, responseCodeConsumer);
+    adminSubscriptions.put(correlationId, responseCodeConsumer);
   }
 }

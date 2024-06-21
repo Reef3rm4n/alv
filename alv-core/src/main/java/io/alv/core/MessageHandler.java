@@ -1,12 +1,14 @@
 package io.alv.core;
 
-import io.alv.core.handler.MessageHandlerContext;
-import io.alv.core.handler.MessageValidationContext;
+import io.alv.core.handler.Context;
+import io.alv.core.handler.ValidationContext;
 
 public interface MessageHandler<M> {
-  void onValidation(MessageValidationContext<M> session);
 
-  void onMessage(MessageHandlerContext<M> session);
+  default void onValidation(ValidationContext<M> session) {
+    // do nothing
+  }
 
+  void onMessage(Context<M> session);
 
 }

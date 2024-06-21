@@ -6,6 +6,10 @@ Useful links:
 - [LMDB Java Tutorial](https://github.com/lmdbjava/lmdbjava/blob/master/src/test/java/org/lmdbjava/TutorialTest.java)
 - [SBE Online Standards](https://www.fixtrading.org/standards/sbe-online/)
 - [Aeron Performance Testing](https://github.com/real-logic/Aeron/wiki/Performance-Testing)
+- https://shaunlaurens.com/aeron-cookbook/
+- https://theaeronfiles.com/aeron-archive/detailed-overview/
+- https://github.com/real-logic/aeron/wiki/Configuration-Options
+- https://pmg.csail.mit.edu/papers/vr-revisited.pdf
 
 ## Ram Disk MacOS
 

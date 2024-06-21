@@ -18,11 +18,11 @@ import org.agrona.concurrent.UnsafeBuffer;
 import java.nio.ByteBuffer;
 
 public class ClusterProtocolCodec {
-  private final ByteBuffer messagePayloadByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.PAYLOAD_SIZE);
+  private final ByteBuffer messagePayloadByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.MAX_PAYLOAD_SIZE);
   private final UnsafeBuffer messagePayloadUnsafeBuffer = new UnsafeBuffer(messagePayloadByteBuffer);
-  private final ByteBuffer envelopeByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.ENVELOPE_SIZE);
+  private final ByteBuffer envelopeByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.MAX_ENVELOPE_SIZE);
   public final UnsafeBuffer envelopeUnsafeBuffer = new UnsafeBuffer(envelopeByteBuffer);
-  private final ByteBuffer entryByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.PAYLOAD_SIZE);
+  private final ByteBuffer entryByteBuffer = ByteBuffer.allocateDirect(BufferSupplier.MAX_PAYLOAD_SIZE);
   private final UnsafeBuffer entryUnsafeBuffer = new UnsafeBuffer(entryByteBuffer);
   private final EntryCodec entryDecoder = new EntryCodec();
   private final OutputEncoder outputEncoder = new OutputEncoder();
