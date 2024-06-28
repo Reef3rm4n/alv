@@ -2,7 +2,9 @@ package io.alv.core.test.handlers;
 
 import io.alv.core.Handler;
 import io.alv.core.MessageHandler;
-import io.alv.core.handler.Context;
+import io.alv.core.handler.MessageContext;
+import io.alv.core.handler.ReadOnlyMemoryStore;
+import io.alv.core.handler.ReadWriteMemoryStore;
 import io.alv.core.handler.ValidationContext;
 import io.alv.core.handler.messages.objects.ConstraintViolation;
 import io.alv.core.test.messages.CounterIncremented;
@@ -18,27 +20,22 @@ import io.alv.core.test.model.Counter;
 public class DecrementCounterHandler implements MessageHandler<DecrementCounter> {
 
   @Override
-  public void onValidation(ValidationContext<DecrementCounter> session) {
+  public void onValidation(ValidationContext<DecrementCounter> session, ReadOnlyMemoryStore memoryStore) {
     if (session.message.failValidation()) {
       session.unicast(new ConstraintViolation("Mocking constraint violation", 1000));
     }
   }
 
   @Override
-  public void onMessage(Context<DecrementCounter> session) {
-    session.state.get(session.message.id(), Counter.class)
+  public void onMessage(MessageContext<DecrementCounter> session, ReadWriteMemoryStore memoryStore) {
+    memoryStore.get(session.message.id(), Counter.class)
       .ifPresentOrElse(
         c -> {
           final int newCount = c.current() - 1;
-          session.state.put(session.message.id(), new Counter(newCount));
-          session.unicast(new CounterIncremented(session.message.id(), 1));
-          session.broadcast(new CounterIncremented(session.message.id(), 1));
+          memoryStore.put(session.message.id(), new Counter(newCount));
+          session.send(new CounterIncremented(session.message.id(), 1));
         },
-        () -> {
-          session.state.put(session.message.id(), new Counter(1));
-          session.unicast(new CounterNotFound(session.message.id()));
-          session.broadcast(new CounterIncremented(session.message.id(), 1));
-        }
+        () -> session.send(new CounterNotFound(session.message.id()))
       );
   }
 

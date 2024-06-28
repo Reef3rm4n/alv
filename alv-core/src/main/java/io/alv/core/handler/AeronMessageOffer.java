@@ -14,6 +14,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import static io.aeron.Publication.*;
 
 public class AeronMessageOffer {
+
   private AeronMessageOffer() {
   }
 

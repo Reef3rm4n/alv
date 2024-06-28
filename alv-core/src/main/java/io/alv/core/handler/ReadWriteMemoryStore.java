@@ -4,9 +4,9 @@ import io.alv.core.cluster.storage.Lmdb;
 import org.agrona.DirectBuffer;
 import org.lmdbjava.Txn;
 
-public class ReadWriteState extends ReadOnlyState {
+public final class ReadWriteMemoryStore extends ReadOnlyMemoryStore {
 
-  public ReadWriteState(Txn<DirectBuffer> txn, Lmdb lmdb) {
+  ReadWriteMemoryStore(Txn<DirectBuffer> txn, Lmdb lmdb) {
     super(txn, lmdb);
   }
 

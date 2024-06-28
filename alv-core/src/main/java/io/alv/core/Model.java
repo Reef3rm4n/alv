@@ -9,4 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Model {
   Encoding value() default Encoding.FURY;
+  Class<? extends IntIndex<?>>[] indexes();
 }

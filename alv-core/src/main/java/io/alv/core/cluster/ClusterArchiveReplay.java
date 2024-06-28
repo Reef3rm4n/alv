@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import static io.alv.core.handler.ClusterConfiguration.*;
 
 public class ClusterArchiveReplay implements Agent {
+
   private static final ThreadLocal<ClusterProtocolCodec> decoderContext = ThreadLocal.withInitial(ClusterProtocolCodec::new);
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterArchiveReplay.class);
   private final Subscription replaySubscription;

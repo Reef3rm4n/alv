@@ -12,6 +12,7 @@ public class VertxHttpGateway extends AbstractVerticle {
     // todo handle authorization
     // todo handle validation
     // todo handle broadcast subscriptions
+
   }
 
   @Override

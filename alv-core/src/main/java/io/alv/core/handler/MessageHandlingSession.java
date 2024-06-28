@@ -19,12 +19,13 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MessageHandlingSession<M> {
+public final class MessageHandlingSession<M> {
   private static final Logger LOGGER = LoggerFactory.getLogger(MessageHandlingSession.class);
   private final Lmdb lmdb;
   private final MessageHandler<M> messageHandler;
   private final ClientSessionManager clientSessionManager;
   private final ScheduledMessagesHandler scheduledMessagesHandler;
+  private final Set<Class<?>> broadcastTypes;
 
   public MessageHandlingSession(
     final ScheduledMessagesHandler scheduledMessagesHandler,
@@ -56,19 +57,16 @@ public class MessageHandlingSession<M> {
 
   private void handleMessage(InputMessage inputMessage, long timestamp, long clientSessionId, long logPosition, M message, Txn<DirectBuffer> txn) {
     try {
-      final var session = new Context<>(message, timestamp, new ReadWriteState(txn, lmdb));
-      messageHandler.onMessage(session);
-      if (!session.schedule.isEmpty()) {
-        session.schedule.forEach(
+      final var messageContext = new MessageContext<>(message, timestamp);
+      messageHandler.onMessage(messageContext, new ReadWriteMemoryStore(txn, lmdb));
+      if (!messageContext.schedule.isEmpty()) {
+        messageContext.schedule.forEach(
           (deadline, cmd) -> scheduledMessagesHandler
             .schedule(inputMessage.snowflake(), deadline, cmd)
         );
       }
-      if (!session.unicast.isEmpty()) {
-        session.unicast.forEach(reply -> reply(reply, inputMessage, timestamp, clientSessionId));
-      }
-      if (!session.broadcast.isEmpty()) {
-        session.broadcast.forEach(event -> broadcast(event, inputMessage, timestamp, clientSessionId));
+      if (!messageContext.sendBuffer.isEmpty()) {
+        messageContext.sendBuffer.forEach(event -> send(event, inputMessage, timestamp, clientSessionId));
       }
       clientSessionManager.unicast(clientSessionId, new Ack(inputMessage.snowflake(), timestamp));
       txn.commit();
@@ -96,9 +94,9 @@ public class MessageHandlingSession<M> {
 
   private Optional<Error> validate(M decodedCommand, long timestamp, Txn<DirectBuffer> txn) {
     final var violations = new ArrayList<ConstraintViolation>(3);
-    final var session = new ValidationContext<>(decodedCommand, timestamp, violations, new ReadOnlyState(txn, lmdb));
+    final var session = new ValidationContext<>(decodedCommand, timestamp, violations);
     try {
-      messageHandler.onValidation(session);
+      messageHandler.onValidation(session, new ReadOnlyMemoryStore(txn, lmdb));
       if (!violations.isEmpty()) {
         txn.abort();
         return Optional.of(new Error(
@@ -122,15 +120,20 @@ public class MessageHandlingSession<M> {
     }
   }
 
-  private void broadcast(Object event, InputMessage inputMessage, long timestamp, long clientSessionId) {
-    serializePayload(event, inputMessage, timestamp, clientSessionId)
-      .ifPresent(
-        payload -> clientSessionManager.broadcast(new Event(
-            timestamp,
-            0,
-            payload
-          )
-        )
+  private void send(Object event, InputMessage inputMessage, long timestamp, long clientSessionId) {
+    serializePayload(event, inputMessage, timestamp, clientSessionId).ifPresent(
+        payload -> {
+          if (broadcastTypes.contains(event.getClass())) {
+            clientSessionManager.broadcast(new Event(
+                timestamp,
+                0,
+                payload
+              )
+            );
+          } else {
+            clientSessionManager.unicast(clientSessionId, new Event(timestamp, inputMessage.snowflake(), payload));
+          }
+        }
       );
   }
 
@@ -157,11 +160,16 @@ public class MessageHandlingSession<M> {
       return Optional.of(MessageEnvelopeCodec.deserialize(inputMessage.messageEnvelope()));
     } catch (Exception e) {
       LOGGER.error("Error deserializing message", e);
-      sendError(new Error(
+      sendError(
+        new Error(
         ErrorType.DESERIALIZATION_EXCEPTION,
         "Unable to decode message %s error=%s".formatted(inputMessage.messageEnvelope().payloadType(), e.getMessage()),
         0
-      ), inputMessage, timestamp, clientSessionId);
+      ),
+        inputMessage,
+        timestamp,
+        clientSessionId
+      );
       return Optional.empty();
     }
   }

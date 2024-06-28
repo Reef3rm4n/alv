@@ -9,6 +9,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
 public class InputCodec  {
+
   private final MessageCodec messageCodec = new MessageCodec();
 
 
