@@ -1,6 +1,6 @@
 # ALV (Aeron LMDB Vert.x)
 
-ALV is a robust library designed to integrate Aeron Cluster, LMDB, and Vert.x, aimed at streamlining the development of Aeron Cluster applications. It enhances the implementation process by leveraging LMDB for state storage, and automates both cluster client and Gateway generation using Vert.x.
+ALV is a library designed to integrate Aeron Cluster, LMDB, and Vert.x, aimed at streamlining the development of Aeron and Aeron Cluster applications. It enhances the implementation process by leveraging LMDB(for workloads that wont fit available ram) or agrona data structures (for workloads that fit into ram) for state storage, and via codegen automates client generation and Gateway generation (Vert.x)
 
 ## Key Features
 - **Automatic Snapshotting**: ALV automatically fragments the application state and returns the buffers to aeron for storage, ensuring that the application can recover from failures efficiently.
@@ -15,7 +15,7 @@ ALV is a robust library designed to integrate Aeron Cluster, LMDB, and Vert.x, a
 
 ### Registering a Model for the State Machine
 
-In ALV, use the `@Model` annotation to define a state machine model, which represents the application state and manages message interactions. The following example demonstrates how to register a `Counter` model:
+In ALV, use the `@Model` annotation to define a state machine model. The following example demonstrates how to register a `Counter` model:
 
 ```java
 @Model(Encoding.FURY)
@@ -29,9 +29,9 @@ public record Counter(
 The library provides a set of annotations (`@Handler`, `@Reply`, `@Broadcast`, etc.) that can be used to define message handlers. Here's an example of a message handler:
 
 ```java
-@Handler
-@Reply({CounterIncremented.class, CounterNotFound.class})
-@Broadcast({CounterIncremented.class})
+@Handler(
+unicast={CounterIncremented.class, CounterNotFound.class},
+broadcast={CounterIncremented.class})
 public class IncrementCounterHandler implements MessageHandler<IncrementCounter> {
   @Override
   public void onValidation(MessageValidationContext<IncrementCounter> session) {
